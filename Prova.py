@@ -37,15 +37,29 @@ class Slitherlink:
         return self._board[y * self._cols + x]
 
     def finished(self) -> bool:
-        coord_plus = []
-        coord_number = []
+        line = 0
         for x in range(self._cols):
             for y in range(self._rows):
                 val = self._board[y * self._cols + x]
-                if val == "+":
-                    coord_plus.append(val)
-                elif val != " ":
-                    coord_number.append(val)
+                if 48 < ord(val) < 57:
+                    if (x-1) == "|" and x > 0:
+                        line += 1
+                    elif (x+1) == "|" and x < self._cols:
+                        line += 1
+                    elif (y+1) == "|" and x < self._rows:
+                        line += 1
+                    elif (y-1) == "|" and x > 0:
+                        line += 1
+                if val == " ":
+                    if (x-1) == "|" and x > 0:
+                        line += 1
+                    elif (x+1) == "|" and x < self._cols:
+                        line += 1
+                    elif (y+1) == "|" and x < self._rows:
+                        line += 1
+                    elif (y-1) == "|" and x > 0:
+                        line += 1
+
 
 class BoardGameGui:
     def __init__(self, g: Slitherlink):
