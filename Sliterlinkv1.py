@@ -5,17 +5,17 @@ from time import time
 W, H = 40, 40
 LONG_PRESS = 0.5
 
+
 class Slitherlink:
     def __init__(self):
         lista = []
-        with open("game_win_5x5.txt") as b:
+        with open("game_5x5.txt") as b:
             for line in b:
                 board = line.strip("\n")  # Legge la matrice togliendo \n alla fine della riga
                 lista += board
         self._board = lista
         self._rows = 11
         self._cols = 11
-        self._risult = False
 
     def cols(self) -> int:
         return self._cols
@@ -24,8 +24,10 @@ class Slitherlink:
         return self._rows
 
     def play_at(self, x: int, y: int):
-        if self._board[y * self._cols + x] == " " or self._board[y * self._cols + x] == "x" :
+        if self._board[y * self._cols + x] == " ":
             self._board[y * self._cols + x] = "|"
+        elif self._board[y * self._cols + x] == "|" or self._board[y * self._cols + x] == "x":
+            self._board[y * self._cols + x] = " "
         else:
             return
 
@@ -36,10 +38,10 @@ class Slitherlink:
             return
 
     def value_at(self, x: int, y: int) -> str:
-        if  self._board[y * self._cols + x] == "|":
-            if  self._board[y * self._cols + (x-1)] == "+" and self._board[y * self._cols + (x+1)] == "+":
+        if self._board[y * self._cols + x] == "|":
+            if self._board[y * self._cols + (x - 1)] == "+" and self._board[y * self._cols + (x + 1)] == "+":
                 return "-"
-            if self._board[(y-1) * self._cols + (x)] == "+" and self._board[(y+1) * self._cols + (x)] == "+":
+            if self._board[(y - 1) * self._cols + (x)] == "+" and self._board[(y + 1) * self._cols + (x)] == "+":
                 return "|"
 
         return self._board[y * self._cols + x]
@@ -51,54 +53,52 @@ class Slitherlink:
             return "sei bello come raul"
 
 
-    '''   
-    def v(self):
-        cont = 0
-        for x in range(self._cols):
-            for y in range(self._rows):
-                val = self._board[y * self._cols + x]
-                if 48 < ord(val) < 57:
-                    if  self._board[(y+1) * self._cols + (x)] == "|":
-                        cont+=1
-                    if self._board[(y-1) * self._cols + (x)] == "|":
-                        cont+=1    
-                    if  self._board[(y) * self._cols + (x+1)] == "|":
-                        cont+=1
-                    if self._board[(y) * self._cols + (x-1)] == "|":
-                        cont+=1  
-                if cont == val:
-                    risult =  True
-                else:
-                    return False
-'''
-        
-                      
     def finished(self) -> bool:
+        risult_num = False
+        risult_plus = False
         cont = 0
         for x in range(self._cols):
             for y in range(self._rows):
                 val = self._board[y * self._cols + x]
                 if "0" < val < "4":
                     cont = 0
-                    if  self._board[(y+1) * self._cols + (x)] == "|":
-                        cont+=1
-                    if self._board[(y-1) * self._cols + (x)] == "|":
-                        cont+=1    
-                    if  self._board[(y) * self._cols + (x+1)] == "|":
-                        cont+=1
-                    if self._board[(y) * self._cols + (x-1)] == "|":
-                        cont+=1 
+                    if self._board[(y + 1) * self._cols + (x)] == "|":
+                        cont += 1
+                    if self._board[(y - 1) * self._cols + (x)] == "|":
+                        cont += 1
+                    if self._board[(y) * self._cols + (x + 1)] == "|":
+                        cont += 1
+                    if self._board[(y) * self._cols + (x - 1)] == "|":
+                        cont += 1
 
                     print(cont, val)
                     if cont == int(val):
-                        risult =  True
+                        risult_num = True
                     else:
-                        risult = False
+                        risult_num = False
 
+                elif val == "+":
+                    cont = 0
 
-        print(risult)
-        return risult
-       
+                    if y < 0 and self._board[(y + 1) * self._cols + (x)] == "|":
+                        cont += 1
+                    if y > self._rows and (self._board[(y - 1) * self._cols + (x)] == "|"):
+                        cont += 1
+                    if x > self._cols and (self._board[(y) * self._cols + (x + 1)] == "|"):
+                        cont += 1
+                    if x < 0 and (self._board[(y) * self._cols + (x - 1)] == "|"):
+                        cont += 1
+                    print(cont, val)
+
+                    if cont == 2 or cont == 0:
+                        risult_plus = True
+                    else:
+                        risult_plus = False
+
+        if risult_num and risult_plus:
+            return True
+        else:
+            return False
 
 class BoardGameGui:
     def __init__(self, g: Slitherlink):
@@ -136,16 +136,18 @@ class BoardGameGui:
         for y in range(rows):
             for x in range(cols):
                 value = str(self._game.value_at(x, y))
-                center = x * W + W//2, y * H + H//2
-                g2d.draw_text_centered(value, center, H//2)
+                center = x * W + W // 2, y * H + H // 2
+                g2d.draw_text_centered(value, center, H // 2)
         if self._game.finished():
             g2d.alert(self._game.message())
-            #g2d.close_canvas()
+            # g2d.close_canvas()
+
 
 def gui_play(game: Slitherlink):
     g2d.init_canvas((game.cols() * W, game.rows() * H))
     ui = BoardGameGui(game)
     g2d.main_loop(ui.tick)
+
 
 s = Slitherlink()
 gui_play(s)
