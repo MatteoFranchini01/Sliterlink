@@ -9,13 +9,14 @@ LONG_PRESS = 0.5
 class Slitherlink:
     def __init__(self):
         lista = []
-        with open("game_5x5.txt") as b:
+        with open("game_nowin_5x5.txt") as b:
             for line in b:
                 board = line.strip("\n")  # Legge la matrice togliendo \n alla fine della riga
                 lista += board
         self._board = lista
         self._rows = 11
         self._cols = 11
+        self._num = 11
 
     def cols(self) -> int:
         return self._cols
@@ -57,10 +58,11 @@ class Slitherlink:
         risult_num = False
         risult_plus = False
         cont = 0
+        count_true = 0
         for x in range(self._cols):
             for y in range(self._rows):
                 val = self._board[y * self._cols + x]
-                if "0" < val < "4":
+                if "0" <= val < "4":
                     cont = 0
                     if self._board[(y + 1) * self._cols + (x)] == "|":
                         cont += 1
@@ -71,9 +73,9 @@ class Slitherlink:
                     if self._board[(y) * self._cols + (x - 1)] == "|":
                         cont += 1
 
-                    print(cont, val)
                     if cont == int(val):
                         risult_num = True
+                        count_true += 1
                     else:
                         risult_num = False
 
@@ -88,17 +90,54 @@ class Slitherlink:
                         cont += 1
                     if x < 0 and (self._board[(y) * self._cols + (x - 1)] == "|"):
                         cont += 1
-                    print(cont, val)
 
                     if cont == 2 or cont == 0:
                         risult_plus = True
                     else:
                         risult_plus = False
 
-        if risult_num and risult_plus:
+        if count_true == self._num and risult_plus:
             return True
         else:
             return False
+
+    def control_board(self, x: int, y: int, control: str) -> tuple:
+
+        if y < 0 and self._board[(y + 1) * self._cols + (x)] == control:
+            return (x, y + 1)
+        elif y > self._rows and (self._board[(y - 1) * self._cols + (x)] == control):
+            return (x, y - 1)
+        elif x > self._cols and (self._board[(y) * self._cols + (x + 1)] == control):
+            return (x + 1, y)
+        elif x < 0 and (self._board[(y) * self._cols + (x - 1)] == control):
+            return (x - 1, y)
+
+
+    def control_loop(self):
+        start_line = (0, 0)
+        b = False
+        if not b:
+            for x in range(self._cols):
+                for y in range(self._rows):
+                    val = self._board[y * self._cols + x]
+                    if val == "|":
+                        start_line = (x, y)
+                        b = True
+
+            x, y = start_line
+            val = self._board[y * self._cols + x]
+            while start_line == new_line or count_line == self._line:
+                if val == "|":
+                    self.control_board(x, y, val)
+                elif val == "+":
+                    self.control_board(x, y, val)
+
+        v = self.control_board(start_line, "+")
+        self.control_board(v, "|")
+        print(start_line)
+        return start_line
+
+
 
 class BoardGameGui:
     def __init__(self, g: Slitherlink):
@@ -124,6 +163,7 @@ class BoardGameGui:
         if "Escape" in (self._prev_keys - keys):  # "Escape" key released
             g2d.close_canvas()
         self._prev_keys = keys
+        self._game.control_loop() #CANCELLARE
 
     def update_buttons(self):
         g2d.clear_canvas()
