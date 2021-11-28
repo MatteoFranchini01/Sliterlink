@@ -17,6 +17,11 @@ class Slitherlink:
         self._rows = 11
         self._cols = 11
         self._num = 11
+        self._num_line_loop = 0
+        self._num_line = 0
+        self._start_line = (0, 0)
+        self._old_coord = (0, 0)
+        self._c = True
 
     def cols(self) -> int:
         return self._cols
@@ -101,42 +106,84 @@ class Slitherlink:
         else:
             return False
 
-    def control_board(self, x: int, y: int, control: str) -> tuple:
 
-        if y < 0 and self._board[(y + 1) * self._cols + (x)] == control:
-            return (x, y + 1)
-        elif y > self._rows and (self._board[(y - 1) * self._cols + (x)] == control):
-            return (x, y - 1)
-        elif x > self._cols and (self._board[(y) * self._cols + (x + 1)] == control):
-            return (x + 1, y)
-        elif x < 0 and (self._board[(y) * self._cols + (x - 1)] == control):
-            return (x - 1, y)
+
+    def control_board(self, x, y, control: str) -> bool:
+        # PROBELMA VARIABILE self._old_coord,  non tiene in memeoria la vecchia posizione(debug)
+        for i in range(self._num_line):
+
+            if (y < 10) and (self._board[(y + 1) * self._cols + (x)] == control) and (x, y + 1) != self._old_coord :
+                self._num_line_loop +=1
+                self._old_coord = (x, y + 1)
+
+            elif (y > 0) and (self._board[(y - 1) * self._cols + (x)] == control ) and (x, y - 1) != self._old_coord:
+                self._num_line_loop +=1
+                self._old_coord = (x, y - 1)
+        
+            elif (x < self._cols) and (self._board[(y) * self._cols + (x + 1)] == control) and (x + 1, y) != self._old_coord :
+                self._num_line_loop +=1
+                self._old_coord = (x + 1, y)
+                
+            elif (x > 0) and (self._board[(y) * self._cols + (x - 1)] == control) and (x - 1, y) != self._old_coord :
+                self._num_line_loop +=1
+                self._old_coord = (x - 1, y)
+            
+            if control =="|":
+                control ="+"
+
+            elif control == "+":
+                control = "|" 
+
+            y, x = self._old_coord 
+
+        if self._num_line_loop == self._num_line:
+            #if self._start_line == self._old_coord:
+            return True
+        else:
+            return False
+        
+                
+       
+
 
 
     def control_loop(self):
-        start_line = (0, 0)
+        self._start_line = (0, 0)
+        cont = 0
         b = False
         if not b:
             for x in range(self._cols):
                 for y in range(self._rows):
                     val = self._board[y * self._cols + x]
                     if val == "|":
-                        start_line = (x, y)
+                        self._start_line = (x, y)
                         b = True
+                        
+        for x in range(self._cols):
+            for y in range(self._rows):
+                val = self._board[y * self._cols + x]
+                if val == "|" or val == "x":
+                   self._num_line +=1
 
+        y, x = self._start_line
+        r = self.control_board(x, y, "+")
+        print(r)
+
+        #risult = self.control_board(self._start_line, "+")
+        #print(risult)
+'''
             x, y = start_line
             val = self._board[y * self._cols + x]
-            while start_line == new_line or count_line == self._line:
-                if val == "|":
-                    self.control_board(x, y, val)
-                elif val == "+":
-                    self.control_board(x, y, val)
+            if val == "|":
+                self.control_board(x, y, val)
+            elif val == "+":
+                self.control_board(x, y, val)
 
         v = self.control_board(start_line, "+")
         self.control_board(v, "|")
         print(start_line)
         return start_line
-
+'''
 
 
 class BoardGameGui:
