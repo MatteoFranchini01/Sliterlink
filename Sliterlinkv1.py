@@ -84,7 +84,7 @@ class Slitherlink:
             if self.control(x-1, y, "|") and x > 0:
                 count += 1
 
-            if count == 2:
+            if count == 2: # se ci sono due linee le altre sono x
                 if self.control(x, y+1, " ") and y < self._cols:
                     self._board[y + 1 * self._cols + x] = "x"
                 if self.control(x, y-1, " ") and y > 0:
@@ -93,6 +93,28 @@ class Slitherlink:
                     self._board[y * self._cols + x + 1] = "x"
                 if self.control(x-1, y, " ") and x > 0:
                     self._board[y * self._cols + x - 1] = "x"
+
+        if 48 < ord(self._board[y * self._cols + x]) < 57:
+
+            if self.control(x, y+1, "|") and y < self._cols:
+                count += 1
+            if self.control(x, y-1, "|") and y > 0:
+                count += 1
+            if self.control(x+1, y, "|") and x < self._rows:
+                count += 1
+            if self.control(x-1, y, "|") and x > 0:
+                count += 1
+
+            if count == int(self._board[y * self._cols + x]): #se ci sono tutte le linee giuste le altre sono x
+                if self.control(x, y+1, " ") and y < self._cols:
+                    self._board[y + 1 * self._cols + x] = "x"
+                if self.control(x, y-1, " ") and y > 0:
+                    self._board[y - 1 * self._cols + x] = "x"
+                if self.control(x+1, y, " ") and x < self._rows:
+                    self._board[y * self._cols + x + 1] = "x"
+                if self.control(x-1, y, " ") and x > 0:
+                    self._board[y * self._cols + x - 1] = "x"
+
 
     def control_loop(self):
         # funzione controllo single loop
