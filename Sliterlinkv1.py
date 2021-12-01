@@ -94,7 +94,7 @@ class Slitherlink:
                 if self.control(x-1, y, " ") and x > 0:
                     self._board[y * self._cols + x - 1] = "x"
 
-        if 48 < ord(self._board[y * self._cols + x]) < 57:
+        if 48 <= ord(self._board[y * self._cols + x]) <= 57:
 
             if self.control(x, y+1, "|") and y < self._cols:
                 count += 1
