@@ -8,19 +8,31 @@ LONG_PRESS = 0.5
 
 class Slitherlink:
     def __init__(self):
+        
+        count_rows = 0
+        count_num = 0
+        count_num_line = 0
         lista = []
         with open("game_nowin_5x5.txt") as b:
             for line in b:
                 board = line.strip("\n")  # Legge la matrice togliendo \n alla fine della riga
                 lista += board
+                count_rows += 1
+        for x in lista:
+            if 48 <= ord(x) <= 57:
+                count_num += 1
+            # conta le linee
+            elif x == "|" or x == "x":
+                count_num_line += 1
+
+        self._cols = len(board)
+        self._rows = count_rows
         self._board = lista
-        self._rows = 11
-        self._cols = 11
-        self._num = 11
+        self._tot_num = count_num
         self._num_line_loop = 0
-        self._num_line = 0
+        self._num_line = count_num_line
         self._start_line = (0, 0)
-        self._old_coord = (0, 0)
+        self._coord = (0, 0)
         self._c = True
 
     def cols(self) -> int:
@@ -58,12 +70,75 @@ class Slitherlink:
         else:
             return "sei bello come raul"
 
+    def control_loop(self):
+        #funzione controllo single loop
+        self._num_line = self._board.count("|") + self._board.count("+") # conto quanti | e + ci sono nella lista
+
+        self._start_line = (0, 0)
+
+        # ricerca della prima linea da cui iniziare il single loop
+        if self._start_line == (0, 0):
+            for x in range(self._cols):
+                for y in range(self._rows):
+                    val = self._board[y * self._cols + x]
+                    if val == "|":
+                        self._start_line = (x, y)
+                      
+        y, x = self._start_line
+        old_x = 0
+        old_y = 0 
+        i = 0
+        self._num_line_loop = 0 
+        start_coord = (x, y)
+        control = "+"
+       # ricerca del single loop
+        for i in range(self._num_line):
+            if (y < self._rows-1) and (self._board[(y + 1) * self._cols + (x)] == control) and (x != old_x or  (y + 1) != old_y) :
+                    old_x, old_y = x, y # memorizzo la vecchia posizione
+                    self._num_line_loop += 1 #conto  quanti "|" / + ci sono
+                    x, y = (x, y + 1)
+                    
+
+            elif (y > 0) and (self._board[(y - 1) * self._cols + (x)] == control) and (x != old_x or (y - 1) != old_y):
+                    old_x, old_y = x, y
+                    self._num_line_loop += 1
+                    x, y = (x, y - 1)
+    
+
+            elif (x < self._cols-1) and (self._board[(y) * self._cols + (x + 1)] == control) and ((x + 1) != old_x or y != old_y): 
+                    old_x, old_y = x, y
+                    self._num_line_loop += 1
+                    x, y= (x + 1, y)
+
+
+            elif (x > 0) and (self._board[(y) * self._cols + (x - 1)] == control) and ((x - 1) != old_x or y != old_y):
+                    old_x, old_y = x, y
+                    self._num_line_loop += 1
+                    x, y = (x - 1, y)
+
+            #cambio il valore di ricerca
+            if control == "|":
+                control = "+"
+
+            elif control == "+":
+                control = "|"
+
+            #se le coordinate sono uguali a quelle iniziali (sono arrivato al punto di paretnza, ho un percorso chiuso) 
+            if (x, y) == start_coord: 
+                return True
+
+        # se i + e le "|" che ho contato sono uguali a quelle in totale
+        if self._num_line == self._num_line_loop:
+            return True
+        else:
+            return False
 
     def finished(self) -> bool:
-        risult_num = False
+        #funzione di verfica vincita del gicoco
         risult_plus = False
         cont = 0
         count_true = 0
+        #controllo che dificano ad ogni numero ci sia il numero giusto di linee
         for x in range(self._cols):
             for y in range(self._rows):
                 val = self._board[y * self._cols + x]
@@ -79,11 +154,9 @@ class Slitherlink:
                         cont += 1
 
                     if cont == int(val):
-                        risult_num = True
                         count_true += 1
-                    else:
-                        risult_num = False
-
+            
+                #controllo ai segni + devono esserci 2 o 0 linee
                 elif val == "+":
                     cont = 0
 
@@ -101,89 +174,12 @@ class Slitherlink:
                     else:
                         risult_plus = False
 
-        if count_true == self._num and risult_plus:
-            return True
-        else:
-            return False
-
-
-
-    def control_board(self, x, y, control: str) -> bool:
-        # PROBELMA VARIABILE self._old_coord,  non tiene in memeoria la vecchia posizione(debug)
-        for i in range(self._num_line):
-
-            if (y < 10) and (self._board[(y + 1) * self._cols + (x)] == control) and (x, y + 1) != self._old_coord :
-                self._num_line_loop +=1
-                self._old_coord = (x, y + 1)
-
-            elif (y > 0) and (self._board[(y - 1) * self._cols + (x)] == control ) and (x, y - 1) != self._old_coord:
-                self._num_line_loop +=1
-                self._old_coord = (x, y - 1)
-        
-            elif (x < self._cols) and (self._board[(y) * self._cols + (x + 1)] == control) and (x + 1, y) != self._old_coord :
-                self._num_line_loop +=1
-                self._old_coord = (x + 1, y)
-                
-            elif (x > 0) and (self._board[(y) * self._cols + (x - 1)] == control) and (x - 1, y) != self._old_coord :
-                self._num_line_loop +=1
-                self._old_coord = (x - 1, y)
-            
-            if control =="|":
-                control ="+"
-
-            elif control == "+":
-                control = "|" 
-
-            y, x = self._old_coord 
-
-        if self._num_line_loop == self._num_line:
-            #if self._start_line == self._old_coord:
-            return True
-        else:
-            return False
-        
-                
-       
-
-
-
-    def control_loop(self):
-        self._start_line = (0, 0)
-        cont = 0
-        b = False
-        if not b:
-            for x in range(self._cols):
-                for y in range(self._rows):
-                    val = self._board[y * self._cols + x]
-                    if val == "|":
-                        self._start_line = (x, y)
-                        b = True
-                        
-        for x in range(self._cols):
-            for y in range(self._rows):
-                val = self._board[y * self._cols + x]
-                if val == "|" or val == "x":
-                   self._num_line +=1
-
-        y, x = self._start_line
-        r = self.control_board(x, y, "+")
-        print(r)
-
-        #risult = self.control_board(self._start_line, "+")
-        #print(risult)
-'''
-            x, y = start_line
-            val = self._board[y * self._cols + x]
-            if val == "|":
-                self.control_board(x, y, val)
-            elif val == "+":
-                self.control_board(x, y, val)
-
-        v = self.control_board(start_line, "+")
-        self.control_board(v, "|")
-        print(start_line)
-        return start_line
-'''
+        #controllo condizioni di vittoria
+        if self.control_loop():
+            if (count_true == self._tot_num and risult_plus):
+                return True
+            else:
+                return False  
 
 
 class BoardGameGui:
@@ -195,15 +191,16 @@ class BoardGameGui:
 
     def tick(self):
         keys = set(g2d.current_keys())
+        rows = 11
         if "LeftButton" in keys and self._mouse_down == 0:
             self._mouse_down = time()
         elif "LeftButton" not in keys and self._mouse_down > 0:
             mouse = g2d.mouse_position()
             x, y = mouse[0] // W, mouse[1] // H
             if time() - self._mouse_down > LONG_PRESS:
-                self._game.flag_at(x, y)
+                self._game.flag_at(x, (rows - y)-1)
             else:
-                self._game.play_at(x, y)
+                self._game.play_at(x, (rows - y)-1)
             self.update_buttons()
             self._mouse_down = 0
 
@@ -217,12 +214,12 @@ class BoardGameGui:
         g2d.set_color((0, 0, 0))
         cols, rows = self._game.cols(), self._game.rows()
         for y in range(1, rows):
-            g2d.draw_line((0, y * H), (cols * W, y * H))
+            g2d.draw_line((0, y * H), (cols * W,  y * H))
         for x in range(1, cols):
             g2d.draw_line((x * W, 0), (x * W, rows * H))
         for y in range(rows):
             for x in range(cols):
-                value = str(self._game.value_at(x, y))
+                value = str(self._game.value_at(x, (rows - y)-1))
                 center = x * W + W // 2, y * H + H // 2
                 g2d.draw_text_centered(value, center, H // 2)
         if self._game.finished():
