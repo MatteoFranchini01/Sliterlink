@@ -4,7 +4,6 @@ from time import time
 W, H = 40, 40
 LONG_PRESS = 0.5
 
-
 class Slitherlink:
     def __init__(self):
 
@@ -32,7 +31,7 @@ class Slitherlink:
         self._num_line = count_num_line
         self._start_line = (0, 0)
         self._coord = (0, 0)
-        self._c = True
+        self._d = [(0, 1), (0, -1), (1, 0), (-1, 0)]
 
     def cols(self) -> int:
         return self._cols
@@ -68,58 +67,96 @@ class Slitherlink:
         if self.finished():
             return "won"
 
+# pulire il codice!!!
+
     def control(self, x: int, y: int, c: str) -> bool:
-        if self._board[y * self._cols + x] == c:
-            return True
+        if 0 <= y <= self._cols and 0 <= x <= self._cols:
+            if self._board[y * self._cols + x] == c:
+                return True
+
+#cerare funzione di ricerca pos una cella cerca intorno, creare funzione di riempimento, 
+
+    def search_element_around(self, x, y):
+        #data una coordinata inziale, restituisce una lista dei valori intorno alla coordinata data
+        if 0 <= y <= self._rows and 0 <= x <= self._cols:
+            element_around = []
+            for i in self._d:
+                x_n, y_n = i
+                if 0 <= (y + y_n) <= self._rows-1 and 0 <= (x+x_n) <= self._cols-1:
+                    element_around.append(self._board[(y + y_n) * self._cols + (x+x_n)])
+                     
+
+            return element_around
+        else:
+            return False
+
+
+    def search_coord_around(self, x, y, c):
+        #data una coordinata e un valore, restituisce una lista di coordinate
+        #del valori dato, intorno al punto di partenza 
+        if 0 <= y <= self._rows and 0 <= x <= self._cols:
+            coord_element = []
+            for i in self._d:
+                x_n, y_n = i
+                if 0 <= (y + y_n) <= self._rows-1 and 0 <= (x+x_n) <= self._cols-1:
+                    if self._board[(y + y_n) * self._cols + (x+x_n)] == c:
+                        coord_element.append(((x+x_n), (y+y_n))) 
+            print(coord_element)
+            return coord_element  
+
+    def insert_around(self, x, y, c):
+        #inserisce un valore in una coordinata data
+        if 0 <= y <= self._rows and 0 <= x <= self._cols:
+            self._board[y * self._cols + x] = c
+
 
     def auto(self, x: int, y: int):
-        count = 0
+        #automatismi
+
         if self.control(x, y, "+"):
-            if self.control(x, y+1, "|") and y < self._cols:
-                count += 1
-            if self.control(x, y-1, "|") and y > 0:
-                count += 1
-            if self.control(x+1, y, "|") and x < self._rows:
-                count += 1
-            if self.control(x-1, y, "|") and x > 0:
-                count += 1
+            #Autocompletamento, al click su un incrocio (+)
+            element_around = self.search_element_around(x,y)
+            number_element = element_around.count("|")
+            if number_element == 2:
+                #ci sono già due linee → tutte ×
+                list_coord = self.search_coord_around(x, y, " ")
+                for coord in list_coord:
+                    self.insert_around(*coord, "x")
 
-            if count == 2: # se ci sono due linee le altre sono x
-                if self.control(x, y+1, " ") and y < self._cols:
-                    self._board[y + 1 * self._cols + x] = "x"
-                if self.control(x, y-1, " ") and y > 0:
-                    self._board[y - 1 * self._cols + x] = "x"
-                if self.control(x+1, y, " ") and x < self._rows:
-                    self._board[y * self._cols + x + 1] = "x"
-                if self.control(x-1, y, " ") and x > 0:
-                    self._board[y * self._cols + x - 1] = "x"
+            #manca solo una casella → linea o ×
+            if element_around.count(" ") == 1 and element_around.count("x") == 3:
+                list_coord = self.search_coord_around(x, y, " ")
+                for coord in list_coord:
+                    self.insert_around(*coord, "|")
 
-        if 48 <= ord(self._board[y * self._cols + x]) <= 57:
+            elif element_around.count(" ") == 1 and element_around.count("|") == 3:
+                list_coord = self.search_coord_around(x, y, " ")
+                for coord in list_coord:
+                    self.insert_around(*coord, "x")
 
-            if self.control(x, y+1, "|") and y < self._cols:
-                count += 1
-            if self.control(x, y-1, "|") and y > 0:
-                count += 1
-            if self.control(x+1, y, "|") and x < self._rows:
-                count += 1
-            if self.control(x-1, y, "|") and x > 0:
-                count += 1
+        
+        elif 48 <= ord(self._board[y * self._cols + x]) <= 57:
+            #Autocompletamento, al click su un vincolo numerico
+            number = self._board[y * self._cols + x]
+            element_around = self.search_element_around(x,y)
+            number_element = element_around.count("|")
 
-            if count == int(self._board[y * self._cols + x]): #se ci sono tutte le linee giuste le altre sono x
-                if self.control(x, y+1, " ") and y < self._cols:
-                    self._board[y + 1 * self._cols + x] = "x"
-                if self.control(x, y-1, " ") and y > 0:
-                    self._board[y - 1 * self._cols + x] = "x"
-                if self.control(x+1, y, " ") and x < self._rows:
-                    self._board[y * self._cols + x + 1] = "x"
-                if self.control(x-1, y, " ") and x > 0:
-                    self._board[y * self._cols + x - 1] = "x"
+            if number_element == int(number):
+                #ci sono già le linee giuste → tutte ×
+                list_coord = self.search_coord_around(x, y, " ")
+                for coord in list_coord:
+                    self.insert_around(*coord, "x")
+
+            elif number_element <= int(number):
+                #mancano n linee e ci sono n caselle libere → tutte linee
+                list_coord = self.search_coord_around(x, y, " ")
+                for coord in list_coord:
+                    self.insert_around(*coord, "|")
 
 
     def control_loop(self):
         # funzione controllo single loop
         self._num_line = self._board.count("|") + self._board.count("+")  # conto quanti | e + ci sono nella lista
-
         self._start_line = (0, 0)
 
         # ricerca della prima linea da cui iniziare il single loop
@@ -177,55 +214,45 @@ class Slitherlink:
             return True
         else:
             return False
+    def control_plus(self):
+        for x in range(self._cols):
+            for y in range(self._rows):
+                val = self._board[y * self._cols + x]
+
+                if val == "+":
+                    number_element = 0
+                    element = self.search_element_around(x, y)
+                    number_element = element.count("|")
+                    if not(number_element == 2 or number_element == 0):  
+                        return False
+        return True
+                
+                
 
     def finished(self) -> bool:
         # funzione di verfica vincita del gicoco
-        risult_plus = False
-        cont = 0
         count_true = 0
-        # controllo che dificano ad ogni numero ci sia il numero giusto di linee
+        # controllo che ad ogni numero ci sia il numero giusto di linee
         for x in range(self._cols):
             for y in range(self._rows):
                 val = self._board[y * self._cols + x]
                 if "0" <= val < "4":
-                    cont = 0
-                    if self.control(x, y+1,"|"):
-                        cont += 1
-                    if self.control(x, y-1, "|"):
-                        cont += 1
-                    if self.control(x+1, y, "|"):
-                        cont += 1
-                    if self.control(x-1, y, "|"):
-                        cont += 1
+                    numbers_line = 0
+                    numbers_element= self.search_element_around(x,y)
+                    numbers_line = numbers_element.count("|") 
 
-                    if cont == int(val):
+                    if numbers_line == int(val):
                         count_true += 1
 
                 # controllo ai segni + devono esserci 2 o 0 linee
-                elif val == "+":
-                    cont = 0
 
-                    if y < 0 and self.control(x, y+1, "|"):
-                        cont += 1
-                    if y > self._rows and self.control(x, y-1, "|"):
-                        cont += 1
-                    if x > self._cols and self.control(x+1, y, "|"):
-                        cont += 1
-                    if x < 0 and self.control(x-1, y, "|"):
-                        cont += 1
-
-                    if cont == 2 or cont == 0:
-                        risult_plus = True
-                    else:
-                        risult_plus = False
-
+            print(self.control_plus())
         # controllo condizioni di vittoria
         if self.control_loop():
-            if (count_true == self._tot_num and risult_plus):
+            if (count_true == self._tot_num and self.control_plus()):
                 return True
             else:
                 return False
-
 
 
 class BoardGameGui:
@@ -237,17 +264,17 @@ class BoardGameGui:
 
     def tick(self):
         keys = set(g2d.current_keys())
-        rows = 11
+        
         if "LeftButton" in keys and self._mouse_down == 0:
             self._mouse_down = time()
         elif "LeftButton" not in keys and self._mouse_down > 0:
             mouse = g2d.mouse_position()
             x, y = mouse[0] // W, mouse[1] // H
-            self._game.auto(x, y)
+            self._game.auto(x, (self._game._rows - y) - 1)
             if time() - self._mouse_down > LONG_PRESS:
-                self._game.flag_at(x, (rows - y) - 1)
+                self._game.flag_at(x, (self._game._rows - y) - 1)
             else:
-                self._game.play_at(x, (rows - y) - 1)
+                self._game.play_at(x, (self._game._rows - y) - 1)
             self.update_buttons()
             self._mouse_down = 0
 
