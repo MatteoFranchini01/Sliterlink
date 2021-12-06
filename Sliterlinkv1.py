@@ -255,8 +255,8 @@ class Slitherlink:
         if self.control_loop():
             if (count_true == self._tot_num and self.control_plus()):
                 return True
-            else:
-                return False
+        else:
+            return False
 
 
 class BoardGameGui:
