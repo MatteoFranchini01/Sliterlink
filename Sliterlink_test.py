@@ -107,7 +107,7 @@ class ControlWinTest(unittest.TestCase):
                 board = line.strip("\n")
                 lista += board
         game._board = lista
-        lista_win = [(1, 10), (3, 10), (0, 9), (4, 9),
+        lista_not_win = [(1, 10), (3, 10), (0, 9), (4, 9),
                      (0, 7), (1, 6), (2, 5), (1, 4), (0, 3), (1, 2),
                      (2, 1), (4, 1), (4, 5), (5, 6), (5, 4), (5, 8),
                      (6, 9), (7, 10), (9, 10), (10, 9), (9, 8), (8, 7),
