@@ -32,6 +32,7 @@ class Slitherlink:
         self._start_line = (0, 0)
         self._coord = (0, 0)
         self._d = [(0, 1), (0, -1), (1, 0), (-1, 0)]
+        
 
     def cols(self) -> int:
         return self._cols
@@ -101,7 +102,6 @@ class Slitherlink:
                 if 0 <= (y + y_n) <= self._rows-1 and 0 <= (x+x_n) <= self._cols-1:
                     if self._board[(y + y_n) * self._cols + (x+x_n)] == c:
                         coord_element.append(((x+x_n), (y+y_n))) 
-            print(coord_element)
             return coord_element  
 
     def insert_around(self, x, y, c):
@@ -152,7 +152,7 @@ class Slitherlink:
                 list_coord = self.search_coord_around(x, y, " ")
                 for coord in list_coord:
                     self.insert_around(*coord, "|")
-
+# contare le linee bene
 
     def control_loop(self):
         # funzione controllo single loop
@@ -171,49 +171,53 @@ class Slitherlink:
         old_x = 0
         old_y = 0
         i = 0
+        cont_line = 0
         self._num_line_loop = 0
         start_coord = (x, y)
         control = "+"
         # ricerca del single loop
         for i in range(self._num_line):
+            tot_line =  self._board.count("|")
+            
             if (y < self._rows - 1) and (self._board[(y + 1) * self._cols + (x)] == control) and (
                     x != old_x or (y + 1) != old_y):
                 old_x, old_y = x, y  # memorizzo la vecchia posizione
-                self._num_line_loop += 1  # conto  quanti "|" / + ci sono
+                if self.control(x, y, "|"): # controllo se nella posizione x, y c'è una linea
+                    cont_line +=1
                 x, y = (x, y + 1)
 
             elif (y > 0) and (self._board[(y - 1) * self._cols + (x)] == control) and (x != old_x or (y - 1) != old_y):
                 old_x, old_y = x, y
-                self._num_line_loop += 1
+                if self.control(x, y, "|"):
+                    cont_line +=1
                 x, y = (x, y - 1)
 
             elif (x < self._cols - 1) and (self._board[(y) * self._cols + (x + 1)] == control) and (
                     (x + 1) != old_x or y != old_y):
                 old_x, old_y = x, y
-                self._num_line_loop += 1
+                if self.control(x, y, "|"):
+                    cont_line +=1
                 x, y = (x + 1, y)
 
             elif (x > 0) and (self._board[(y) * self._cols + (x - 1)] == control) and ((x - 1) != old_x or y != old_y):
                 old_x, old_y = x, y
-                self._num_line_loop += 1
+
+                if self.control(x, y, "|"):
+                    cont_line +=1
                 x, y = (x - 1, y)
 
             # cambio il valore di ricerca
             if control == "|":
                 control = "+"
-
             elif control == "+":
                 control = "|"
 
             # se le coordinate sono uguali a quelle iniziali (sono arrivato al punto di paretnza, ho un percorso chiuso)
             if (x, y) == start_coord:
-                return True
+                if tot_line == cont_line:
+                    return True
+        return False
 
-        # se i + e le "|" che ho contato sono uguali a quelle in totale
-        if self._num_line == self._num_line_loop:
-            return True
-        else:
-            return False
     def control_plus(self):
         for x in range(self._cols):
             for y in range(self._rows):
@@ -236,6 +240,7 @@ class Slitherlink:
         for x in range(self._cols):
             for y in range(self._rows):
                 val = self._board[y * self._cols + x]
+                 # controllo ai segni + devono esserci 2 o 0 linee
                 if "0" <= val < "4":
                     numbers_line = 0
                     numbers_element= self.search_element_around(x,y)
@@ -244,9 +249,8 @@ class Slitherlink:
                     if numbers_line == int(val):
                         count_true += 1
 
-                # controllo ai segni + devono esserci 2 o 0 linee
+               
 
-            print(self.control_plus())
         # controllo condizioni di vittoria
         if self.control_loop():
             if (count_true == self._tot_num and self.control_plus()):
