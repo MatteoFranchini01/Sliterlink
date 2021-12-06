@@ -113,7 +113,7 @@ class ControlWinTest(unittest.TestCase):
                      (6, 9), (7, 10), (9, 10), (10, 9), (9, 8), (8, 7),
                      (7, 6), (9, 4), (7, 4), (10, 3), (10, 1), (9, 0),
                      (8, 1), (7, 2), (5, 2)]
-        for i in lista_win:
+        for i in lista_not_win:
             x, y = i
             game.play_at(x, y)
         self.assertTrue(game.control_loop() == False)
