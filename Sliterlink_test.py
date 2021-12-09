@@ -176,7 +176,7 @@ class ControlAutoTest(unittest.TestCase):
             game.auto(3, 1)
             self.assertTrue(game.value_at(3, 2) == "x")
 
-    def test_numero_click_linea (self):
+    def test_numero_click_linea(self):
         """
         Verifica il corretto autocompletamento quando l'utente clicca sul numero
         quando ho n caselle libere attorno al numero e mancano n linee. L'automatismo
@@ -184,18 +184,41 @@ class ControlAutoTest(unittest.TestCase):
         """
         game = s.Slitherlink()
         lista = []
-
+        COLS = 11
+        r = [0, 1, 2]
         with open("game_5x5.txt") as g:
             for line in g:
                 board = line.strip("\n")
                 lista += board
         game._board = lista
-        game.play_at(7, 10)
+        for i in r:
+            game._board[9 * COLS + 6] = " "
+            game._board[8 * COLS + 7] = " "
+            game._board[10 * COLS + 7] = " "
+            game._board[9 * COLS + 8] = " "
 
-        with self.subTest("Controllo inserimento linea nella posizione corretta"):
-            self.assertTrue(game.value_at(7, 10) == "-")
+            if i == 0:
+                with self.subTest("Possibilità 1"):
+                    game.play_at(7, 10)
+                    game._board[9 * COLS + 6] = "x"
+                    game._board[8 * COLS + 7] = "x"
+                    game.auto(7, 9)
+                    self.assertTrue(game.value_at(8, 9) == "|")
 
-        game.auto(7, 9)
+            elif i == 1:
+                with self.subTest("Possibilità 2"):
+                    game.play_at(7, 10)
+                    game._board[9 * COLS + 8] = "x"
+                    game._board[8 * COLS + 7] = "x"
+                    game.auto(7, 9)
+                    self.assertTrue(game.value_at(6, 9) == "|")
 
-        with self.subTest("Controllo dell'automatismo"):
-            self.assertTrue(game.value_at(8, 9) == "|")
+            elif i == 2:
+                with self.subTest("Possibilità 3"):
+                    game.play_at(7, 10)
+                    game._board[9 * COLS + 8] = "x"
+                    game._board[9 * COLS + 6] = "x"
+                    game.auto(7, 9)
+                    self.assertTrue(game.value_at(7, 8) == "-")
+
+
