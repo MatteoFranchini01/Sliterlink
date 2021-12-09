@@ -2,17 +2,18 @@ import g2d
 from time import time
 
 W, H = 40, 40
-LONG_PRESS = 0.5
+LONG_PRESS = 0.2
 
 
 class Slitherlink:
-    def __init__(self):
+    def __init__(self, c):
 
         count_rows = 0
         count_num = 0
         count_num_line = 0
+        self._game_mode1 = c
         lista = []
-        with open("game_win_5x5.txt") as b:
+        with open(self._game_mode1) as b:
             for line in b:
                 board = line.strip("\n")  # Legge la matrice togliendo \n alla fine della riga
                 lista += board
@@ -145,9 +146,15 @@ class Slitherlink:
 
             elif number_element <= int(number):
                 # mancano n linee e ci sono n caselle libere → tutte linee
+                list_element = self.search_element_around(x, y)
                 list_coord = self.search_coord_around(x, y, " ")
-                for coord in list_coord:
-                    self.insert_around(*coord, "|")
+                
+                cont_x = list_element.count("x")
+                cont_void = list_element.count(" ")
+                if (cont_x <= int(number)) and (cont_void <= int(number) ): 
+                
+                    for coord in list_coord:
+                        self.insert_around(*coord, "|")
 
     # contare le linee bene
 
@@ -251,34 +258,125 @@ class Slitherlink:
         else:
             return False
 
+    def unsolvable(self):
+         
+         for x in range(self._cols):
+            for y in range(self._rows):
+            
+                if "0" < (self._board[y * self._cols + x]) <= "3":
+                     number = self._board[y * self._cols + x]
+                     numbers_element = self.search_element_around(x, y)
+                     number_x = numbers_element.count("x")
+                     numer_line = numbers_element.count("|")
+                     if not(number_x <= int(number) and numer_line <= int(number)):
+                        return False
+                
+                
+                if self.control(x, y, "+"):
+                    plus_element = self.search_element_around(x, y)
+                    plus_x = plus_element.count("x")
+                    plus_line = plus_element.count("|")
+                    
+                    if not((plus_x == 0 or plus_x == 2) and (plus_line == 0 or  plus_line == 2)):
+                        return False
+                
+            
+    
+         if self.control_loop():
+             return True
 
+         return False
+         
+                   
 class BoardGameGui:
     def __init__(self, g: Slitherlink):
         self._game = g
         self._mouse_down = 0
         self._prev_keys = set()
+        self._key = False
+        self._game_menu = False
+        self._solution = False
+
         self.update_buttons()
 
-    def tick(self):
-        keys = set(g2d.current_keys())
+    def home_screen(self):
+        solution = False
+        #creazione della schermata di home
+       
+        g2d.draw_image("home.png", (0, 0))
+        
+        if(g2d.key_pressed("x")): 
+           self._key = True
+           self.update_buttons()
 
-        if "LeftButton" in keys and self._mouse_down == 0:
-            self._mouse_down = time()
-        elif "LeftButton" not in keys and self._mouse_down > 0:
-            mouse = g2d.mouse_position()
-            x, y = mouse[0] // W, mouse[1] // H
-            self._game.auto(x, (self._game._rows - y) - 1)
-            if time() - self._mouse_down > LONG_PRESS:
-                self._game.flag_at(x, (self._game._rows - y) - 1)
-            else:
-                self._game.play_at(x, (self._game._rows - y) - 1)
+    def game_menu(self):
+        if not(self._solution):
+            g2d.draw_image("mode.png", (0, 0))
+
+        if(g2d.key_pressed("1")): 
+            self._game._game_mode1 = "game_nowin_5x5.txt"
+            self._game.__init__(self._game._game_mode1)
+            self._game_menu = True
             self.update_buttons()
-            self._mouse_down = 0
 
-        if "Escape" in (self._prev_keys - keys):  # "Escape" key released
-            g2d.close_canvas()
-        self._prev_keys = keys
-        self._game.control_loop()  # CANCELLARE
+        elif(g2d.key_pressed("2")):
+            self._game._game_mode1 = "facile.txt"
+            self._game.__init__(self._game._game_mode1)
+            self._game_menu = True
+            self.update_buttons()
+
+        elif(g2d.key_pressed("3")):
+            self._game._game_mode1 = "medio.txt"
+            self._game.__init__(self._game._game_mode1)
+            self._game_menu = True
+            self.update_buttons()
+
+        elif(g2d.key_pressed("4")):
+            self._game._game_mode1 = "difficile.txt"
+            self._game.__init__(self._game._game_mode1)
+            self._game_menu = True
+            self.update_buttons()
+        
+        else:
+            self._game_menu = False
+            
+
+    def tick(self):
+
+        if not (self._key):
+            self.home_screen()
+
+        if(self._key):
+            if not(self._game_menu):
+                self.game_menu()
+            if (self._game_menu):
+                keys = set(g2d.current_keys())
+
+                if "LeftButton" in keys and self._mouse_down == 0:
+                    self._mouse_down = time()
+                elif "LeftButton" not in keys and self._mouse_down > 0:
+                    mouse = g2d.mouse_position()
+                    x, y = mouse[0] // W, mouse[1] // H
+                    self._game.auto(x, (self._game._rows - y) - 1)
+                    if time() - self._mouse_down > LONG_PRESS:
+                        self._game.flag_at(x, (self._game._rows - y) - 1)
+                    else:
+                        self._game.play_at(x, (self._game._rows - y) - 1)
+                    self.update_buttons()
+                    self._mouse_down = 0
+
+                if "Escape" in (self._prev_keys - keys):  # "Escape" key released
+                    g2d.close_canvas()
+
+                if g2d.key_pressed("u"):
+                    print(self._game.unsolvable())
+
+                if g2d.key_pressed("m"):
+                    self._game_menu = False
+                    
+                self._prev_keys = keys
+                #self._game.control_loop()  # CANCELLARE
+            
 
     def update_buttons(self):
         g2d.clear_canvas()
@@ -292,17 +390,40 @@ class BoardGameGui:
             for x in range(cols):
                 value = str(self._game.value_at(x, (rows - y) - 1))
                 center = x * W + W // 2, y * H + H // 2
-                g2d.draw_text_centered(value, center, H // 2)
-        if self._game.finished():
-            g2d.alert(self._game.message())
-            # g2d.close_canvas()
+                if value == "|" or value == "-":
+                    g2d.set_color((0,0,0))
+                    if value == "-":
+                        g2d.fill_rect(((x*40-20-1), (y*40 +20)), (80, 2))
+                    elif value == "|":
+                        g2d.fill_rect(((x*40+20-1), (y*40 -20)), (2, 80))
+                elif "0" < value < "4":
+                        numbers_line = 1
+                        numbers_element = self._game.search_element_around(x,  (rows - y) - 1)
+                        numbers_line = numbers_element.count("|")
 
+                        if numbers_line == int(value):
+                            g2d.set_color((0,230,0))
+                            g2d.draw_text_centered(value, center, H // 2)
+                        else:
+                            g2d.set_color((0,0,0))
+                            g2d.draw_text_centered(value, center, H // 2)
+                else:
+                    g2d.set_color((0,0,0))
+                    g2d.draw_text_centered(value, center, H // 2)
+                    
+                
+        if self._game.finished():
+            g2d.draw_image("won.png", (0, 0))
+            print("won")
+           
 
 def gui_play(game: Slitherlink):
-    g2d.init_canvas((game.cols() * W, game.rows() * H))
-    ui = BoardGameGui(game)
-    g2d.main_loop(ui.tick)
+
+        g2d.init_canvas((game.cols() * W, game.rows() * H))
+        print("taglia", game.cols() * W, game.rows() * H)
+        ui = BoardGameGui(game)
+        g2d.main_loop(ui.tick)
 
 
-s = Slitherlink()
-#gui_play(s)
+s = Slitherlink("game_nowin_5x5.txt")
+gui_play(s)
