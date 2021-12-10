@@ -4,16 +4,14 @@ from time import time
 W, H = 40, 40
 LONG_PRESS = 0.2
 
-
 class Slitherlink:
     def __init__(self, c):
-
         count_rows = 0
         count_num = 0
         count_num_line = 0
-        self._game_mode1 = c
+        self._mode = c
         lista = []
-        with open(self._game_mode1) as b:
+        with open(self._mode) as b:
             for line in b:
                 board = line.strip("\n")  # Legge la matrice togliendo \n alla fine della riga
                 lista += board
@@ -29,10 +27,8 @@ class Slitherlink:
         self._rows = count_rows
         self._board = lista
         self._tot_num = count_num
-        self._num_line_loop = 0
         self._num_line = count_num_line
         self._start_line = (0, 0)
-        self._coord = (0, 0)
         self._d = [(0, 1), (0, -1), (1, 0), (-1, 0)]
 
     def cols(self) -> int:
@@ -52,8 +48,6 @@ class Slitherlink:
     def flag_at(self, x: int, y: int):
         if self.control(x, y, " ") or self.control(x, y, "|"):
             self._board[y * self._cols + x] = "x"
-        else:
-            return
 
     def value_at(self, x: int, y: int) -> str:
         if self.control(x, y, "|"):
@@ -66,33 +60,30 @@ class Slitherlink:
 
     def message(self):
         if self.finished():
-            return "won"
-
-    # pulire il codice!!!
+            return "you won"
 
     def control(self, x: int, y: int, c: str) -> bool:
         if 0 <= y <= self._cols and 0 <= x <= self._cols:
             if self._board[y * self._cols + x] == c:
                 return True
 
-    # cerare funzione di ricerca pos una cella cerca intorno, creare funzione di riempimento,
-
     def search_element_around(self, x, y):
-        # data una coordinata inziale, restituisce una lista dei valori intorno alla coordinata data
+        '''
+        data una coordinata inziale, restituisce una lista dei valori intorno alla coordinata data
+        '''
         if 0 <= y <= self._rows and 0 <= x <= self._cols:
             element_around = []
             for i in self._d:
                 x_n, y_n = i
                 if 0 <= (y + y_n) <= self._rows - 1 and 0 <= (x + x_n) <= self._cols - 1:
                     element_around.append(self._board[(y + y_n) * self._cols + (x + x_n)])
-
             return element_around
-        else:
-            return False
 
     def search_coord_around(self, x, y, c):
-        # data una coordinata e un valore, restituisce una lista di coordinate
-        # del valori dato, intorno al punto di partenza
+        '''
+        data una coordinata e un valore, restituisce una lista di coordinate
+        del valori dato, intorno al punto di partenza
+        '''
         if 0 <= y <= self._rows and 0 <= x <= self._cols:
             coord_element = []
             for i in self._d:
@@ -108,7 +99,10 @@ class Slitherlink:
             self._board[y * self._cols + x] = c
 
     def auto(self, x: int, y: int):
-        # automatismi
+        '''
+        Automatisimi, quando l'utente clicca su un + o un numero 
+        viene eseguto un automatismo se le condizioni sono soddisfatte 
+        '''
 
         if self.control(x, y, "+"):
             # Autocompletamento, al click su un incrocio (+)
@@ -130,7 +124,6 @@ class Slitherlink:
                 list_coord = self.search_coord_around(x, y, " ")
                 for coord in list_coord:
                     self.insert_around(*coord, "x")
-
 
         elif 48 <= ord(self._board[y * self._cols + x]) <= 57:
             # Autocompletamento, al click su un vincolo numerico
@@ -156,9 +149,10 @@ class Slitherlink:
                     for coord in list_coord:
                         self.insert_around(*coord, "|")
 
-    # contare le linee bene
-
     def control_loop(self):
+        '''
+        funzione che controlla che le linee formano un solo poligono chiuso 
+        '''
         # funzione controllo single loop
         self._num_line = self._board.count("|") + self._board.count("+")  # conto quanti | e + ci sono nella lista
         self._start_line = (0, 0)
@@ -176,7 +170,6 @@ class Slitherlink:
         old_y = 0
         i = 0
         cont_line = 0
-        self._num_line_loop = 0
         start_coord = (x, y)
         control = "+"
         # ricerca del single loop
@@ -223,10 +216,12 @@ class Slitherlink:
         return False
 
     def control_plus(self):
+        '''
+        controllo che attorno al + ci siano 0 o 2 linee
+        '''
         for x in range(self._cols):
             for y in range(self._rows):
                 val = self._board[y * self._cols + x]
-
                 if val == "+":
                     number_element = 0
                     element = self.search_element_around(x, y)
@@ -236,7 +231,10 @@ class Slitherlink:
         return True
 
     def finished(self) -> bool:
-        # funzione di verfica vincita del gicoco
+        '''
+        verifica se la partita è conclusa 
+        '''
+        # funzione di verfica vincita del gioco
         count_true = 0
         # controllo che ad ogni numero ci sia il numero giusto di linee
         for x in range(self._cols):
@@ -259,17 +257,19 @@ class Slitherlink:
             return False
 
     def unsolvable(self):
+        '''
+        premette di verificare se la partita si può risolvere o meno
+        '''
          
-         for x in range(self._cols):
+        for x in range(self._cols):
             for y in range(self._rows):
-            
                 if "0" < (self._board[y * self._cols + x]) <= "3":
                      number = self._board[y * self._cols + x]
                      numbers_element = self.search_element_around(x, y)
                      number_x = numbers_element.count("x")
                      numer_line = numbers_element.count("|")
                      if not(number_x <= int(number) and numer_line <= int(number)):
-                        return False
+                        return True
                 
                 
                 if self.control(x, y, "+"):
@@ -277,17 +277,15 @@ class Slitherlink:
                     plus_x = plus_element.count("x")
                     plus_line = plus_element.count("|")
                     
-                    if not((plus_x == 0 or plus_x == 2) and (plus_line == 0 or  plus_line == 2)):
-                        return False
-                
-            
+                    if not((plus_x == 0 or plus_x == 2) and not(plus_line == 3 or  plus_line == 4)):
+                        return True
+        
+        if self.control_loop():
+          return False
     
-         if self.control_loop():
-             return True
-
-         return False
-         
-                   
+        return True
+            
+       
 class BoardGameGui:
     def __init__(self, g: Slitherlink):
         self._game = g
@@ -296,52 +294,61 @@ class BoardGameGui:
         self._key = False
         self._game_menu = False
         self._solution = False
-
         self.update_buttons()
 
     def home_screen(self):
-        solution = False
-        #creazione della schermata di home
-       
+        '''
+        creazione della schermata di home
+        '''
         g2d.draw_image("home.png", (0, 0))
-        
         if(g2d.key_pressed("x")): 
            self._key = True
-           self.update_buttons()
+           g2d.clear_canvas()
 
     def game_menu(self):
+        '''
+         schermata di menu
+        '''
         if not(self._solution):
-            g2d.draw_image("mode.png", (0, 0))
+            g2d.draw_image("menu.png", (0, 0))
+        elif(self._solution):
+            g2d.clear_canvas()
+            g2d.draw_image("solution.png", (0, 0))
+            
 
         if(g2d.key_pressed("1")): 
-            self._game._game_mode1 = "game_nowin_5x5.txt"
-            self._game.__init__(self._game._game_mode1)
+            self._game.__init__("game_nowin_5x5.txt")
             self._game_menu = True
             self.update_buttons()
 
         elif(g2d.key_pressed("2")):
-            self._game._game_mode1 = "facile.txt"
-            self._game.__init__(self._game._game_mode1)
+            self._game.__init__("facile.txt")
             self._game_menu = True
             self.update_buttons()
 
         elif(g2d.key_pressed("3")):
-            self._game._game_mode1 = "medio.txt"
-            self._game.__init__(self._game._game_mode1)
+            self._game.__init__("medio.txt")
             self._game_menu = True
             self.update_buttons()
 
         elif(g2d.key_pressed("4")):
-            self._game._game_mode1 = "difficile.txt"
-            self._game.__init__(self._game._game_mode1)
+            self._game.__init__("difficile.txt")
             self._game_menu = True
+            self.update_buttons()
+
+        elif(g2d.key_pressed("s")):
+            self._solution= not (self._solution)
             self.update_buttons()
         
         else:
             self._game_menu = False
             
-
     def tick(self):
+        '''
+        visualizzazione partita sul canvas
+        '''
+        if g2d.key_pressed("Escape"):
+            g2d.close_canvas()
 
         if not (self._key):
             self.home_screen()
@@ -369,7 +376,7 @@ class BoardGameGui:
                     g2d.close_canvas()
 
                 if g2d.key_pressed("u"):
-                    print(self._game.unsolvable())
+                    print("unsolvable:", self._game.unsolvable())
 
                 if g2d.key_pressed("m"):
                     self._game_menu = False
@@ -377,15 +384,15 @@ class BoardGameGui:
                 self._prev_keys = keys
                 #self._game.control_loop()  # CANCELLARE
             
-
     def update_buttons(self):
+        '''
+        aggiorna la partita
+        '''
         g2d.clear_canvas()
-        g2d.set_color((0, 0, 0))
+        g2d.set_color((50, 50, 50))
+
         cols, rows = self._game.cols(), self._game.rows()
-        for y in range(1, rows):
-            g2d.draw_line((0, y * H), (cols * W, y * H))
-        for x in range(1, cols):
-            g2d.draw_line((x * W, 0), (x * W, rows * H))
+
         for y in range(rows):
             for x in range(cols):
                 value = str(self._game.value_at(x, (rows - y) - 1))
@@ -395,7 +402,8 @@ class BoardGameGui:
                     if value == "-":
                         g2d.fill_rect(((x*40-20-1), (y*40 +20)), (80, 2))
                     elif value == "|":
-                        g2d.fill_rect(((x*40+20-1), (y*40 -20)), (2, 80))
+                        if self._game.control(x, y - 1, "+") and self._game.control(x, y + 1, "+"):
+                            g2d.fill_rect(((x*40+20-1), (y*40 -20)), (2, 80))
                 elif "0" < value < "4":
                         numbers_line = 1
                         numbers_element = self._game.search_element_around(x,  (rows - y) - 1)
@@ -410,20 +418,16 @@ class BoardGameGui:
                 else:
                     g2d.set_color((0,0,0))
                     g2d.draw_text_centered(value, center, H // 2)
-                    
-                
+   
         if self._game.finished():
             g2d.draw_image("won.png", (0, 0))
             print("won")
-           
-
+      
 def gui_play(game: Slitherlink):
-
         g2d.init_canvas((game.cols() * W, game.rows() * H))
-        print("taglia", game.cols() * W, game.rows() * H)
         ui = BoardGameGui(game)
         g2d.main_loop(ui.tick)
 
 
 s = Slitherlink("game_nowin_5x5.txt")
-gui_play(s)
+#gui_play(s)
